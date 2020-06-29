@@ -1,0 +1,271 @@
+/* @import "~bootstrap/dist/css/bootstrap.css"; */
+/* You can add global styles to this file, and also import other style files */
+.clearfix:after {
+    content: ".";
+    display: block;
+    clear: both;
+    visibility: hidden;
+    line-height: 0;
+    height: 0;
+}
+ 
+.clearfix {
+    /* display: inline-block; */
+}
+ 
+html[xmlns] .clearfix {
+    display: block;
+}
+ 
+* html .clearfix {
+    height: 1%;
+}
+a{
+    text-decoration:none;
+  -webkit-transition: all 0.5s ease;
+     -moz-transition: all 0.5s ease;
+       -o-transition: all 0.5s ease;
+      -ms-transition: all 0.5s ease;
+          transition: all 0.5s ease;
+}
+ 
+a:hover {
+  /* //border-radius: 50%;
+  //-webkit-transform: rotate(360deg);
+    // -moz-transform: rotate(360deg);
+      // -o-transform: rotate(360deg);
+     // -ms-transform: rotate(360deg);
+          //transform: rotate(360deg);
+		 // z-index:5555;
+		    //height: 90%;
+			//width: 90%; */
+
+}
+li{ list-style-type:none;
+}
+h1,h2,h3,h4,h5,h6,ul,li{ margin:0;
+padding:0;
+}
+*{ margin:0;
+padding:0;
+}
+input[type="submit"]{ cursor: pointer;
+}
+/*****************************/
+
+/* Tooltip container */
+.tooltip {    opacity: 1;
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+}
+.tooltip button i {
+    color: white!important;
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+
+  /* Position the tooltip text */
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -60px;
+
+  /* Fade in tooltip */
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* Tooltip arrow */
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+/*****************************************/
+body{ font-size:14px;
+color: #737373;
+overflow:hidden;
+}
+.wrapper{  float:left;
+width:100%;
+}
+.inner_warpper{ max-width:96%;
+margin:0 auto;
+}
+header{ background: #000;
+padding:25px 0;
+color:#fff;
+float:left;
+width:100%;
+}
+.hed_left{ float:left;
+width:30%;
+font-size:25px;
+font-weight:bold;
+}
+.hed_right{ float:right;
+width:70%;
+}
+.hed_right li{ display:inline-block;
+margin:0 4px;
+}
+.hed_right ul{ float:right;
+}
+.hed_right button{
+	    background: #3183fe;
+	padding:7px 10px;
+	min-width:40px;
+	border:none;
+	border-radius:3px;
+}
+.hed_right button:focus{border: none;
+    outline: none;
+
+}
+.org_bg{    background: #feac31 !important;
+}
+.red_bg{    background: #e53f2c !important;
+}
+.hed_right .form-control{ min-width:150px;	
+}
+.hed_right .form-control option{ padding:7px;
+}
+.clander{ max-width:200px;
+color:#000;
+float:left;
+padding-right:4px;
+}
+
+
+
+/****************Event Popup***************************************/
+input,select {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  display:inline-block; 
+  *display: inline;     /* for IE7*/
+  zoom:1;              /* for IE7*/
+  vertical-align:middle;
+  margin-left:20px;
+  width: 74%;
+  padding: 0.4em;
+
+}
+
+label {
+  display:inline-block;
+  *display: inline;     /* for IE7*/
+  zoom:1;              /* for IE7*/
+  float: left;
+  padding-top: 5px;
+  text-transform: uppercase;
+  
+  /* text-align: right; */
+  width: 90px;
+}
+
+
+
+.add-event-header{
+      width: 100%;
+    background: #fef5e6;
+    border-bottom: 1px solid #d9b072;
+}
+
+
+.add-event-header h4{ 
+
+  padding:15px;
+
+}  
+
+
+.add-event-header .close{ 
+margin-right: 10px;
+margin-top: 2%;
+    font-size: xx-large;
+    font-weight: 900;
+}
+
+
+.tebt_event{ padding:15px 20px;
+}
+.tebt_event .row{ margin-top:7px;
+margin-bottom:7px;
+}
+.datetimepicpop{margin-top: -22px;}
+.datetimepicpop td:first-child{ padding-right:10px;
+}
+
+.tebt_event .form-control{border: 1px solid #d4d4e2;
+    border-radius: 0;
+    box-shadow: none;
+}
+.tebt_event .col-md-3{ text-align:right;
+}
+.btnlist{ float:right;
+margin-top:15px;
+}
+.btnlist li{ display:inline-block;
+margin-left:7px;
+}
+.btnlist button{ padding:7px 15px;
+    color: #b0b0b7;
+  border:1px solid #b0b0b7;
+    border-color: rgba(176, 176, 183, 0.5);
+  font-weight:bold;
+    background-color: rgba(176, 176, 183, 0.03);
+}
+.btnlist button:hover{border-color: #b0b0b7;
+background:#b0b0b7;
+  color:#fff;
+  
+}
+.green_btn{ color:#27ca37 !important;
+border-color: #27ca37 !important;
+}
+.green_btn:focus,
+.green_btn:hover{border-color: #27ca37 !important;
+background:#27ca37 !important;
+color:#fff !important;
+}
+.red_btn{ color:#F44336 !important;
+border-color: #F44336 !important;
+margin-right: 235px;
+}
+.red_btn:focus,
+.red_btn:hover{border-color: #F44336 !important;
+background:#F44336 !important;
+color:#fff !important;
+}
+.colse_icon{ float:right;
+    cursor: pointer;
+    color: #4f5964;
+    contain: paint;
+
+}
+.form-label{
+  font-weight: 700;
+}

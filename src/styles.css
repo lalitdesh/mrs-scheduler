@@ -1,0 +1,209 @@
+body {
+  font-size: 14px;
+  color: #737373;
+  overflow: hidden;
+}
+
+.wrapper {
+  float: left;
+  width: 100%;
+}
+
+.inner_warpper {
+  max-width: 96%;
+  margin: 0 auto;
+}
+
+header {
+  background: #000;
+  padding: 25px 0;
+  color: #fff;
+  float: left;
+  width: 100%;
+}
+
+.hed_left {
+  float: left;
+  width: 30%;
+  font-size: 25px;
+  font-weight: bold;
+}
+
+.hed_right {
+  float: right;
+  width: 70%;
+}
+
+.hed_right li {
+  display: inline-block;
+  margin: 0 2px;
+}
+
+.hed_right ul {
+  float: right;
+}
+
+.hed_right button {
+  background: #3183fe;
+  padding: 7px 10px;
+  min-width: 40px;
+  border: none;
+  border-radius: 3px;
+}
+
+.hed_right button:focus {
+  border: none;
+  outline: none;
+}
+
+.org_bg {
+  background: #feac31 !important;
+}
+
+.red_bg {
+  background: #e53f2c !important;
+}
+
+.hed_right .form-control {
+  min-width: 150px;
+}
+
+.hed_right .form-control option {
+  padding: 7px;
+}
+
+.add-modal-header {
+  border-top-right-radius: 2px;
+  border-top-left-radius: 2px;
+  border-bottom: 1px solid #feac31;
+  background-color: #fff5e6;
+}
+
+.bs-chevron-up {
+  top: 6px !important;
+}
+.bs-chevron-down {
+  top: -6px !important;
+}
+#addEventModal .modal-dialog {
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%);
+  width: 40% !important;
+}
+#addEventModal .modal-body {
+  background: #f8f9fb;
+}
+.calendar-container {
+  width: 300px;
+  overflow-x: scroll;
+}
+
+.calendar-container .fc-view > table {
+  width: 500px;
+}
+.fc-license-message {
+  display: none;
+}
+
+/*temprory css for color*/
+
+/*temprory css for color*/
+/* Open */
+.status-1 {
+  background-color: #a90329 !important;
+  /* border-color: #fea013; */
+}
+/* Dispatched */
+.status-2 {
+  background-color: #4e7a8c !important;
+  /* border-color: #13fea0; */
+}
+/* .Started */
+.status-3 {
+  background-color: #3276b1 !important;
+  /* border-color: #fea013; */
+}
+/* .Temporary Repair  */
+.status-4 {
+  background-color: #31feac !important;
+  /* border-color: #fea013; */
+}
+
+/* .Incomplete */
+.status-5 {
+  background-color: #4e7a8c !important;
+  /* border-color: #fea013; */
+}
+/* .Complete */
+.status-6 {
+  background-color: #3276b1 !important;
+  /* border-color: #fea013; */
+}
+/* .Pending Approval  */
+.status-7 {
+  background-color: #57889c !important;
+  /* border-color: #fea013; */
+}
+
+/* .Closed  */
+.status-8 {
+  background-color: #900323 !important;
+  /* border-color: #fea013; */
+}
+/* .Canceled  */
+.status-9 {
+  background-color: #a90329 !important;
+  /* border-color: #fea013; */
+}
+/* .On Hold  */
+.status-10 {
+  background-color: #c79121 !important;
+  /* border-color: #fea013; */
+}
+/* .Scheduled  */
+.status-11 {
+  background-color: #820782 !important;
+}
+
+.fc-time-area .fc-event-container .fc-event {
+  margin: 5px;
+  border-left: 4px solid #000;
+  border-right: 4px solid #000;
+  padding-left: 5px;
+}
+.fc-toolbar.fc-header-toolbar {
+  display: none !important;
+}
+
+.tech-profile-image {
+  height: 40px;
+  width: 40px;
+  margin-right: 7px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.acti_notac {
+  height: 10px;
+  width: 10px;
+  position: absolute;
+  bottom: 3px;
+  right: 7px;
+}
+
+.pro_pic {
+  width: 47px;
+  position: relative;
+  height: 40px;
+}
+
+.custom-cls {
+  display: inline-flex;
+}
+
+.left-tech-name {
+	color: #737373;
+	font-weight: bolder;
+}
