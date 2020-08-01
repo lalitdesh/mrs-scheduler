@@ -2,7 +2,7 @@
 	<header>
 		<div class="inner_warpper">
 			<div class="hed_left">
-				Service Order Schedular
+				Service Order Scheduler
 
 			</div>
 			<div class="hed_right">
@@ -10,8 +10,9 @@
 					<li class="clander">
 
 
-						<input type="text" class="form-control" #dp="bsDatepicker" (bsValueChange)="onDateChange($event)"
-							bsDatepicker [bsValue]="startDate">
+						<input type="text" [bsConfig]="{ dateInputFormat: 'DD-MM-YYYY' }" class="form-control"
+							#dp="bsDatepicker" (bsValueChange)="onDateChange($event)" bsDatepicker
+							[bsValue]="startDate">
 
 
 					</li>
@@ -30,20 +31,23 @@
 					<!-- <li class="tooltip"><button class="org_bg"><i class="fas fa-sync"></i></button>
 						<span class="tooltiptext">Reloads Grid</span>
 					</li> -->
-					<li class="tooltip"><button (click)="reoladDatabase()" class="red_bg"><i class="fas fa-recycle"></i></button>
+					<li class="tooltip"><button (click)="reoladDatabase()" class="red_bg"><i
+								class="fas fa-recycle"></i></button>
 						<span class="tooltiptext">Reloads database</span>
 					</li>
-					<li class="tooltip"><button (click)="fullScreen(fullScreenWindow)"><i class="fas fa-arrows-alt"></i></button>
+					<li class="tooltip"><button (click)="fullScreen(fullScreenWindow)"><i
+								class="fas fa-arrows-alt"></i></button>
 						<span class="tooltiptext">Fullscreen</span>
 					</li>
 					<!-- <li class="tooltip"><button><i class="fas fa-info"></i></button>
 						<span class="tooltiptext">click to show info</span>
 					</li> -->
-					<li class="tooltip"><button id="{{zoomOut}}" [disabled]="zoomOut > zoomInZoomOutArray.length-1 "
+					<li class="tooltip zoom"><button id="{{zoomOut}}"
+							[disabled]="zoomOut > zoomInZoomOutArray.length-1 "
 							(click)="onChangeZoomInZoomOut('zout',zoomOut)"><i class="fas fa-search-minus"></i></button>
 						<span class="tooltiptext">Zoomout</span>
 					</li>
-					<li class="tooltip"><button id="{{zoomIn}}" [disabled]="zoomIn <= -1"
+					<li class="tooltip zoom"><button id="{{zoomIn}}" [disabled]="zoomIn <= -1"
 							(click)="onChangeZoomInZoomOut('zin',zoomIn)"><i class="fas fa-search-plus"></i></button>
 						<span class="tooltiptext">Zoomin</span>
 					</li>
@@ -56,7 +60,7 @@
 
 	<app-calendar [techniciansArray]="technicianListArray" [resetSelectedEvent]="resetSelectedEvent"
 		(eventSelect)="onEventSelect($event)" (eventDateChange)="onEventDateChange($event)"
-		(dragEvent)="ondragDropEvent($event)" (eventUpdate)="onEventUpdate($event)" (addEventPopup)="openModal()"
+		(dragEvent)="ondragDropEvent($event)" (eventUpdate)="onEventUpdate($event)" (addEventPopup)="openModal($event)"
 		(eventDelete)="deleteEvent($event)" [date]="date" [calendarIndex]="calendarIndexArray"></app-calendar>
 </div>
 
@@ -77,48 +81,56 @@
 							<div class="col-md-3">
 								<p class="form-label">SERVICE ORDER<span class="required">*</span></p>
 							</div>
-							<div class="col-md-2">
-								<input
-									[ngClass]="(addEventForm.get('service_order').hasError('required') && addEventForm.get('service_order').touched)?'input-red':''"
-									maxlength="50" (keydown.space)="$event.preventDefault()" formControlName="service_order" type="text"
-									placeholder="SERVICE ORDER">
+							<div class="col-md-9">
+								<div>
+									<input [attr.disabled]="isDeleteButtonVisible ? '' : null" formControlName="task_name"
+										[typeahead]="serviceOrderArray"
+										typeaheadOptionField="value"
+										placeholder="Search Service Order"
+										class="form-control" 
+										[typeaheadScrollable]="true"
+										[typeaheadOptionsInScrollableView]="5"
+										typeaheadWaitMs="1000"
+										typeaheadPhraseDelimiters="&,"
+										typeaheadOptionsLimit="50"
+										[typeaheadItemTemplate]="customItemTemplate"
+
+										(typeaheadNoResults)="changeTypeaheadNoResults($event)" 
+										(typeaheadOnSelect)="onSelectServiceOrder($event)"
+										(keyup)="getServiceOrder($event.target.value)">
+
+								</div>
+								<ng-template #customItemTemplate let-model="item" let-index="index">
+									<h5>{{model.value }}&nbsp;&nbsp;{{model.reason }} </h5>
+								  </ng-template>
+								<div *ngIf="typeaheadNoResults===true"> No Results Found</div>
 
 							</div>
-							<div class="col-md-6">
+							<!-- <div class="col-md-5"> 
 								<input
 									[ngClass]="(addEventForm.get('task_name').hasError('required') && addEventForm.get('task_name').touched)?'input-red':''"
-									maxlength="50" formControlName="task_name" type="text" placeholder="Name">
+									maxlength="50" [attr.disabled]="true" readonly formControlName="task_name" type="text" placeholder="Name">
 
-							</div>
-
+							</div> -->
+				
 						</div>
-						<div class="row">
+						<!-- <div class="row">
 							<div class="col-md-3"></div>
 							<div class="col-md-9" *ngIf="f.service_order.errors">
-								<p class="text-danger" *ngIf="formSumbited && f.service_order.errors.required">Service order is required
+								<p class="text-danger" *ngIf="formSumbited && f.service_order.errors.required">Service
+									order is required
 								</p>
 							</div>
-						</div>
+						</div> -->
 						<div class="row">
 							<div class="col-md-3"></div>
 							<div class="col-md-9" *ngIf="f.task_name.errors">
-								<p class="text-danger" *ngIf="formSumbited && f.task_name.errors.required">Task Name is required</p>
+								<p class="text-danger" *ngIf="formSumbited && f.task_name.errors.required">Task Name is
+									required</p>
 							</div>
 						</div>
 
-						<div class="row">
-							<div class="col-md-3">
-								<p class="form-label">STATUS</p>
-							</div>
-							<div class="col-md-9">
-								<select class="form-control" formControlName="status">
-									<option value="{{order.id}}" *ngFor="let order of orderListArray; let i = index"
-										[attr.selected]="i == 0 ? true : null" id="{{i}}">{{order.serviceOrderStatus}}
-									</option>
 
-								</select>
-							</div>
-						</div>
 						<div class="row" *ngIf="!isDeleteButtonVisible">
 							<div class="col-md-3">
 								<p class="form-label">TENANT</p>
@@ -147,13 +159,26 @@
 							</div>
 							<div class="col-md-9">
 								<select class="form-control" formControlName="emp_id">
-									<option value="{{resouce.empId}}" *ngFor="let resouce of technicianListArray; let i = index"
-										id="{{i}}">
+									<option value="{{resouce.empId}}"
+										*ngFor="let resouce of technicianListArray; let i = index" id="{{i}}">
 										{{resouce.empName}}</option>
 								</select>
 							</div>
 						</div>
 
+						<div class="row">
+							<div class="col-md-3">
+								<p class="form-label">STATUS</p>
+							</div>
+							<div class="col-md-9">
+								<select class="form-control" formControlName="status">
+									<option value="{{order.id}}" *ngFor="let order of orderListArray; let i = index"
+										[attr.selected]="i == 0 ? true : null" id="{{i}}">{{order.serviceOrderStatus}}
+									</option>
+
+								</select>
+							</div>
+						</div>
 
 
 						<div class="row">
@@ -161,22 +186,26 @@
 								<p class="form-label">START</p>
 							</div>
 							<div class="col-md-9">
-								<table class="datetimepicpop">
+								<table>
 									<tr>
 										<td>
 											<div class='input-group date' id='datetimepicker2'>
-												<input (bsValueChange)="onStartDateChange($event)" type="text" class="form-control mb-3"
-													[bsConfig]="{ adaptivePosition: true }" placeholder="Datepicker" bsDatepicker
+												<input (bsValueChange)="onStartDateChange($event)" type="text"
+													class="form-control mb-3" [bsConfig]="{ adaptivePosition: true }"
+													placeholder="Datepicker" bsDatepicker
 													formControlName="start_date" />
 											</div>
 										</td>
 										<td>
-
-											<div class='input-group date' id='datetimepicker3'>
-												<timepicker (ngModelChange)="onStartTimeChange($event)" formControlName="start_time">
-												</timepicker>
+											<!-- {{formStartTime}} -->
+											<div class='input-group date datetimepickerStart'>
+												<input value="{{formStartTime}}" type='text'
+													class="form-control mb-3" />
+												<span
+													class="input-group-addon input-group-text mb-3 time-picker-icon timepickericon">
+													<span class="far fa-clock"></span>
+												</span>
 											</div>
-
 										</td>
 									</tr>
 								</table>
@@ -188,19 +217,31 @@
 								<p class="form-label">END</p>
 							</div>
 							<div class="col-md-9">
-								<table class="datetimepicpop">
+								<table>
 									<tr>
 										<td>
 											<div class='input-group date' id='datetimepicker2'>
-												<input type="text" class="form-control mb-3" [bsConfig]="{ adaptivePosition: true }"
-													placeholder="Datepicker" bsDatepicker formControlName="end_date" />
+												<input type="text" class="form-control mb-3"
+													[bsConfig]="{ adaptivePosition: true }" placeholder="Datepicker"
+													bsDatepicker formControlName="end_date" />
 
 											</div>
 										</td>
 										<td>
+											<!-- <div class='input-group date' id='datetimepicker4'>
+												<input [min]="minFormEndDate"  formControlName="end_time" [popover]="popTemplate" [outsideClick]="true" placement="bottom" />
+												<ng-template #popTemplate>
+													<timepicker formControlName="end_time" ></timepicker>
+												</ng-template> -->
+											<!-- </div> -->
 
-											<div class='input-group date' id='datetimepicker4'>
-												<timepicker [min]="minFormEndDate" formControlName="end_time"></timepicker>
+
+											<div class='input-group date datetimepickerEnd'>
+												<input value="{{formEndTime}}" type='text' class="form-control mb-3 " />
+												<span
+													class="input-group-addon input-group-text mb-3 time-picker-icon timepickericonEnd">
+													<span class="far fa-clock"></span>
+												</span>
 											</div>
 
 										</td>
@@ -212,10 +253,12 @@
 						<div class="row">
 							<div class="col-md-12">
 								<ul class="btnlist">
-									<li *ngIf="isDeleteButtonVisible"><button type="button" (click)="deleteEvent(eventFormArray.eventId);$event.preventDefault();"
+									<li *ngIf="isDeleteButtonVisible"><button type="button"
+											(click)="deleteEvent(eventFormArray.eventId);$event.preventDefault();"
 											class="red_btn">DELETE</button></li>
 									<li style="float: right;"> <button class="green_btn">SAVE</button></li>
-									<li style="float: right;"><button (click)="closeAddEventModalPopup()">CANCEL</button></li>
+									<li style="float: right;"><button
+											(click)="closeAddEventModalPopup()">CANCEL</button></li>
 								</ul>
 							</div>
 						</div>

@@ -3,6 +3,24 @@
 <ng-container *ngIf="options">
 	<ng-fullcalendar #fullcalendar (dateClick)="dateClick($event)" (clickButton)="clickButton($event)"
 		(eventDragStop)="eventDragStop($event)" [eventsModel]="eventsModel" [options]="options"
-		(eventClick)="eventClick($event)"></ng-fullcalendar>
+		(eventClick)="eventClick($event)" (contextmenu)="onContextMenu($event)"></ng-fullcalendar>
 
 </ng-container>
+
+<context-menu >
+<context-menu #addContextMenu >
+	<ng-template contextMenuItem >
+		<span class="contextMenuItem" (click)="OpenAddEvent();" *ngIf="addEventTechId"><i class="fa fa-plus" aria-hidden="true"></i>
+			&nbsp;Add Event
+		</span>
+
+		<span class="contextMenuItem" (click)="updateEvent(contextEventId);" *ngIf="editEventObj" ><i class="fa fa-pencil" aria-hidden="true"></i>
+			&nbsp;Edit Event  
+		</span>
+
+		<span class="contextMenuItem" (click)="deleteEvent(contextEventId);" *ngIf="editEventObj"><i class="fa fa-trash" aria-hidden="true"></i>
+			&nbsp;Delete Event
+		</span>
+
+	</ng-template>
+</context-menu>

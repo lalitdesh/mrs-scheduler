@@ -13,6 +13,7 @@ import { ModalModule } from 'ngx-bootstrap/modal';
 import { NgxSpinnerModule } from "ngx-spinner";
 import { ToastrModule } from 'ngx-toastr';
 import { DragDropModule } from '@angular/cdk/drag-drop';
+import { TypeaheadModule } from 'ngx-bootstrap/typeahead';      
 
 
 @NgModule({
@@ -27,6 +28,8 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
     BsDatepickerModule.forRoot(),
     TimepickerModule.forRoot(),
     ModalModule.forRoot(),
+    TypeaheadModule.forRoot(),      
+
     NgxSpinnerModule,
     DragDropModule, 
     ToastrModule.forRoot({

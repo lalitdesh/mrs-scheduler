@@ -13,7 +13,6 @@ import setHours from 'date-fns/setHours';
 import isEqual from 'date-fns/isEqual';
 import isSameDay from 'date-fns/isSameDay';
 import compareAsc from 'date-fns/compareAsc';
-import { ResizeEvent } from 'angular-resizable-element';
 import { ContextMenuComponent } from 'ngx-contextmenu';
 import {
   startOfMonth,
@@ -25,7 +24,6 @@ import {
 
 import { Subscription, fromEvent } from 'rxjs';
 import { flatMap, takeUntil } from 'rxjs/operators';
-import { DragulaService } from 'ng2-dragula';
 import isSameHour from 'date-fns/isSameHour';
 import setMinutes from 'date-fns/setMinutes';
 import isSameWeek from 'date-fns/isSameWeek';
@@ -42,6 +40,8 @@ import { Calendar, OptionsInput } from '@fullcalendar/core';
 import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
 import timeline from '@fullcalendar/timeline';
 import { element } from 'protractor';
+import { ContextMenuService } from 'ngx-contextmenu';
+import { el } from 'date-fns/locale';
 
 @Component({
   selector: 'app-calendar',
@@ -95,95 +95,33 @@ export class CalendarComponents implements OnInit, OnChanges, AfterViewChecked {
   @ViewChild('fullcalendar') fullcalendar: CalendarComponent;
 
   techniciansById = {};
+  addEventTechId: any;
+  editEventObj: any;
+  contextEventId: number;
+  isDateClick: boolean = false;
 
-  constructor(private dragulaService: DragulaService) {
+  constructor(private contextMenuService: ContextMenuService) {
     this.elem = document.documentElement;
 
     this.Math = Math;
-    this.subs.add(
-      this.dragulaService
-        .drop('SPILL')
-        .subscribe(({ name, el, target, source, sibling }) => {
-          console.log('name', name);
-          console.log('el', el);
-          // console.log("eventsss",$(el).children().eq(1)[0].id);
-          // console.log("target",target)
-          // console.log("target.id",target.id)
-          // console.log("source",source)
-          // console.log("sibling",sibling)
-          // console.log("$(el).children()",$(el).children())
-          // console.log("$(el).children()",$(el).children()[0].id)
-          if (
-            !$(el).children() ||
-            !($(el).children()[0] && $(el).children()[0].id)
-          ) {
-            return false;
-          }
 
-          console.log('$(el).children()[0].id', $(el).children()[0].id);
-          let eventArray = JSON.parse($(el).children()[0].id);
-          const startingDate = new Date(sibling.id);
-          const diff = eventArray.diff * 60;
-          const empId = target.id;
-          let endIngDate: Date;
-          if (this.calendarViewOption == 3) {
-            endIngDate = addMinutes(startingDate, diff);
-          }
-          if (this.calendarViewOption == 4 || this.calendarViewOption == 5) {
-            endIngDate = addMinutes(startingDate, diff * 24);
-          }
-          console.log('startDate', startingDate);
-          console.log('endDate', startingDate);
-          console.log('diff', diff);
-          // console.log("diff",empId);
-          const startDate = format(startingDate, 'MM/dd/yyyy');
-          const startTime = format(startingDate, 'hh:mm a');
-          const endDate = format(endIngDate, 'MM/dd/yyyy');
-          const endTime = format(endIngDate, 'hh:mm a');
-          this.dragEvent.emit({
-            eventId: eventArray.eventId,
-            taskName: eventArray.taskName,
-            empId: empId,
-            startDate: `${startDate} ${startTime}`,
-            endDate: `${endDate} ${endTime}`,
-            status: eventArray.statusId,
-          });
-        })
-    );
-    // dragulaService.createGroup("ITEMS", {
-    //   removeOnSpill: true
-    // });
-
-    dragulaService.createGroup('SPILL', {
-      revertOnSpill: true,
-
-      moves: (el, container, handle) => {
-        console.log('code here ', el);
-        // console.log('handle', handle.className.match(/can-drag/g).length);
-        console.log('this.isResizingEvent', this.isResizingEvent);
-        let canDrag = handle.className.match(/can-drag/g);
-        return canDrag && canDrag.length ? true : false;
-      },
-    });
   }
   ngAfterViewChecked(): void {
     this.setLefTColTechnicianHeight();
+    // this.initFullcalendar()
   }
   ngOnChanges() {
-    this.dateTimeRow = [];
-    console.log('code change');
-    this.calendarViewOption = this.calendarIndex['id'];
-    this.date.setHours(0);
-    this.date.setMinutes(0);
-    this.date.setSeconds(0);
-    this.date.setMilliseconds(0);
+    this.options = null;
+    this.resources = [];
+    this.events = [];
+    this.allEvents=[];
+  
 
     this.techniciansArray.forEach((tech) => {
       this.techniciansById[tech.empId] = tech;
     });
 
-    if(this.techniciansArray.length > 0){
-      console.log("thsitech",this.techniciansArray)
+    if (this.techniciansArray.length > 0) {
       this.techniciansArray.forEach((element) => {
         this.resources.push({
           id: element.empId,
@@ -191,181 +129,246 @@ export class CalendarComponents implements OnInit, OnChanges, AfterViewChecked {
         });
         if (element.eventCount > 0) {
           element.eventdata.forEach((element1) => {
+            element1['empId']=element.empId;
+
             this.allEvents.push(element1);
+
+
+            const icons = {
+              Canceled: 'fa-times',
+              Closed: 'fa-ban',
+              Complete: 'fa-check-square-o',
+              Dispatched: 'fa-truck',
+              Incomplete: 'fa-circle-o-notch',
+              'On Hold': 'fa-ban',
+              Open: 'fa-circle-thin',
+              'Pending Approval': 'fa-flag-o',
+              Scheduled: 'fa-calendar-check-o',
+              Started: 'fa-wrench',
+              'Temporary Repair': 'fa-chain-broken',
+            };
             this.events.push({
-              id: element1.eventId, 
+              id: element1.eventId,
               resourceId: element.empId,
-              title: `${element1.taskName}\n${element1.tenantName}\n${element1.status}`,
+              title: `<div class="event-show"> <div class="event-icon"> <i class="fa fa-lg fa-fw fa ${icons[element1.status]}"></i> </div> <div class="w-100"> ${element1.taskName}<br />${element1.tenantName}<br />${element1.status} <span class="float-right">${element1.priority}</span><div></div>`,
               start: new Date(element1.startDate),
               end: new Date(element1.endDate),
               customRender: true,
               taskName: element1.taskName,
               className: `status-${element1.statusId}`, //  override!
+              popup: {
+                title: element1.taskName,
+                start: format(new Date(element1.startDate), 'MMM d, y hh:mm a'),
+                end: format(new Date(element1.endDate), 'MMM d, y hh:mm a'),
+                status: element1.status,
+                tenantName: element1.tenantName,
+                priority: element1.priority,
+
+              },
             });
           });
         }
       });
-      this.initFullcalendar();
+      this.dateTimeRow = [];
+      this.calendarViewOption = this.calendarIndex['id'];
+
+      this.date.setHours(0);
+      this.date.setMinutes(0);
+      this.date.setSeconds(0);
+      this.date.setMilliseconds(0);
+      setTimeout(() => {
+        this.initFullcalendar();
+      }, 0 );
     }
 
-    console.log('resources', this.resources);
-    this.initFullcalendar();
     this.setCalendar();
     this.removeTempSelection();
     this.calendarHeadingFormat = 'E MM/dd';
-    console.log('this.calendarIndexAfterChange', this.calendarIndex);
 
-    switch (this.calendarViewOption) {
-      case 1:
-        /** 15 minutes */
-        this.calendarHeadingFormat = 'E MM/dd';
-
-        break;
-      case 2:
-        /** half an hours */
-        this.calendarSubHeadingFormat = 'hh:mm aa';
-
-        break;
-      case 3: {
-        /** for hours */
-        $('.fc-resourceTimelineDay-button').click();
-
-        this.calendarSubHeadingFormat = 'hh:mm aa';
-        this.renderEvent();
-        break;
-      }
-      case 4:
-        /** week */
-        $('.fc-resourceTimelineWeek-button').click();
-        this.calendarSubHeadingFormat = 'EEEE';
-        this.renderEvent();
-
-        break;
-      case 5: {
-        /** for month */
-        $('.fc-resourceTimelineMonth-button').click();
-        this.calendarHeadingFormat = 'MMM yyyy';
-        this.calendarSubHeadingFormat = 'dd MMMM';
-        this.renderEvent();
-
-        // this.setMonthCalendar();
-        break;
-      }
-      case 6:
-        /** year */
-        $('.fc-resourceTimelineYear-button').click();
-        this.calendarSubHeadingFormat = 'MMM yyyy';
-
-        break;
-    }
+    
   }
   initFullcalendar() {
     let that = this;
-    console.log('this.calendarIndex', this.calendarIndex);
-    console.log('this.aftersss', this.events);
-    setTimeout(() => {
+    this.options = {
+      displayEventTime: false,
+      editable: true, // don't allow event dragging
+      selectable: true,
+      // eventResourceEditable: true, // except for between resources
+      droppable: true,
+      // defaultDate: this.date,
+
+      // aspectRatio: 1.605,
+      height: window.innerHeight - 120,
+      contentHeight: window.innerHeight - 120,
+      handleWindowResize: true,
+      eventTextColor: 'white',
+      themeSystem: 'bootstrap3',
+      plugins: [resourceTimelinePlugin, timeline, interactionPlugin],
+
+      header: {
+        // left: 'today prev,next',
+        // center: 'title',
+        right:
+          'resourceTimelineDay,resourceTimelineWeek,resourceTimelineWeek2,resourceTimelineMonth,resourceTimelineYear,resourceTimelineYear2',
+      },
+      eventClick: (info) => {
+        // alert('Event: ' + info.event);
+
+        that.eventUpdates(info.event);
+      },
+      dateClick: (info) => {
+
+        that.isDateClick = true;
+      },
+      select: (info) => {
+        // alert(info.resource.id + 'selected ' + info.startStr + ' to ' + info.endStr);
+
+        that.isDateClick = false;
+        setTimeout(() => {
+          that.eventSelects(info);
+        });
+      },
+      eventDrop: (info: any) => {
+        let resourceId;
+        if (info.newResource) {
+          resourceId = info.newResource.id;
+        } else {
+          const index = that.allEvents.findIndex(
+            (x) => x['eventId'] === info.event.id
+          );
+          resourceId = that.allEvents[index].empId;
+        }
+
+        const techindex = that.techniciansArray.findIndex(
+          (x) => x['empId'] === resourceId
+        );
+        if(this.techniciansArray[techindex].absent != null){
+          info.revert();
+          return;
+        }
+
+        that.eventDragStopF(info.event, resourceId);
+      },
+      eventResize: (info) => {
+        that.eventDragResize(info.event);
+      },
+      views: {
+        resourceTimelineYear2: {
+          type: 'resourceTimelineYear',
+          buttonText:"Year2",
+          duration: {
+           year:2
+          },
+         },
+        resourceTimelineWeek2: {
+          type: 'resourceTimelineWeek',
+          buttonText:"Week2",
+          duration: { weeks: 3 },
+          slotDuration: {days: 1},
+        }
+      },
+
+
+      defaultDate:new Date(this.date),
+
       
 
-      this.options = {
-        editable: true, // don't allow event dragging
-        selectable: true,
-        // eventResourceEditable: true, // except for between resources
-        droppable: true,
-        // aspectRatio: 1.605,
-        height: window.innerHeight - 120,
-        contentHeight: window.innerHeight - 120,
-        handleWindowResize: true,
-        eventTextColor: 'white',
-        themeSystem: 'bootstrap3',
-        plugins: [resourceTimelinePlugin, timeline, interactionPlugin],
 
-        header: {
-          // left: 'today prev,next',
-          // center: 'title',
-          right:
-            'resourceTimelineDay,resourceTimelineWeek,resourceTimelineMonth,resourceTimelineYear',
-        },
-        eventClick: (info) => {
-          // alert('Event: ' + info.event);
 
-          that.eventUpdates(info.event);
-        },
-        select: (info) => {
-          // alert(info.resource.id + 'selected ' + info.startStr + ' to ' + info.endStr);
-          that.eventSelects(info);
-        },
-        eventDrop: (info: any) => {
-          let resourceId;
-          if (info.newResource) {
-            resourceId = info.newResource.id;
-          } else {
-            const index = that.allEvents.findIndex(
-              (x) => x['eventId'] === info.event.id
-            );
-            console.log('info.event', that.allEvents);
-            resourceId = that.allEvents[index].empId;
-          }
-          that.eventDragStopF(info.event, resourceId);
-        },
-        eventResize: (info) => {
-          that.eventDragResize(info.event);
-        },
-        // tslint:disable-next-line:no-string-literal
-        defaultView: this.calendarIndex['cal'],
-        eventRender: this.eventRender,
-        // expandRows: true,
-        resources: this.resources,
-        events: this.events,
-        resourceLabelText: 'Technician List',
+      // tslint:disable-next-line:no-string-literal
+      defaultView: this.calendarIndex['cal'],
+      resourceOrder: "title",
+      // expandRows: true,
+      resources: this.resources,
+      events: this.events,
+      resourceLabelText: 'Technician List',
 
-        resourceRender: (resourceObj) => {
-          const techObj = this.techniciansById[
-            resourceObj.resource._resource.id
-          ];
-          let imgPath = techObj.profileImage
-            ? `${this.S3BucketUrl}${techObj.profileImage}`
-            : `../../../assets/images/profile.png`;
+      eventMouseEnter: function (info) {
+        var tis = info.el;
+        var popup = info.event.extendedProps.popup;
+        var tooltip = '<div class="tooltipevent" style="top:' + ($(tis).offset().top - 5) + 'px;left:' + ($(tis).offset().left + ($(tis).width()) / 2) + 'px"><div>' + popup.title + '</div><div>' + popup.tenantName + '</div><div>' + popup.status + '</div><div>' + popup.priority + '</div></div>';
+        var $tooltip = $(tooltip).appendTo('body');
 
-          let techHTML = `
+        //            If you want to move the tooltip on mouse movement then you can uncomment it
+        //            $(tis).mouseover(function(e) {
+        //                $(tis).css('z-index', 10000);
+        //                $tooltip.fadeIn('500');
+        //                $tooltip.fadeTo('10', 1.9);
+        //            }).mousemove(function(e) {
+        //                $tooltip.css('top', e.pageY + 10);
+        //                $tooltip.css('left', e.pageX + 20);
+        //            });
+      },
+      eventMouseLeave: function (info) {
+        $(info.el).css('z-index', 8);
+        $('.tooltipevent').remove();
+      },
+
+      resourceRender: (resourceObj) => {
+        const techObj = this.techniciansById[
+          resourceObj.resource._resource.id
+        ];
+        let imgPath = techObj.profileImage
+          ? `${this.S3BucketUrl}${techObj.profileImage}`
+          : `../../../assets/images/profile.png`;
+
+        let techHTML = `
             <div class="custom-cls">
               <div class="pro_pic">
                 <img class="tech-profile-image" src="${imgPath}" />
                 <img class="acti_notac" src="${
-                  !techObj.absent
-                    ? '../../../assets/images/active.png'
-                    : '../../../assets/images/in_active.png'
-                }" />
+          !techObj.absent
+            ? '../../../assets/images/active.png'
+            : '../../../assets/images/in_active.png'
+          }" />
               </div>
               <div>
                 <div class="left-tech-name">${techObj.empName.ucWords()}</div>
-                <div ><small>${techObj.eventCount || 0} Events</small></div>
+                <div ><small>${techObj.eventCount || 0} Service Order</small></div>
               </div>
             </div>`;
-          $(resourceObj.el).find('.fc-cell-content').html(techHTML);
-        },
-      };
-    }, 1000);
+        $(resourceObj.el).find('.fc-cell-content').html(techHTML);
+      },
+
+
+      // will be using it with tooltip js
+      eventRender: (event: any) => {
+        event.el.querySelectorAll('.fc-title')[0].innerHTML = event.el.querySelectorAll('.fc-title')[0].innerText;
+        $(event.el).on('contextmenu', (e: any) => {
+          this.contextEventId = event.event.extendedProps.popup.eventId;
+          this.addEventTechId = null;
+          this.editEventObj = {};
+
+          this.contextMenuService.show.next({
+            event: e.originalEvent,
+            item: {},
+          });
+
+          e.preventDefault();
+          e.stopPropagation();
+        });
+        return event.el;
+      },
+
+    };
   }
-  // will be using it with tooltip js
-  eventRender = (event: any) => {
-    $(event.el).on('contextmenu', (e: any) => {
-      e.preventDefault();
-    });
-    return event.el;
-  };
+
   ngOnInit(): void {
-    this.initFullcalendar();
+    // this.initFullcalendar();
   }
   eventUpdates(event: any) {
     const index = this.allEvents.findIndex((x) => x['eventId'] === event.id);
+    this.eventUpdate.emit(this.allEvents[index]);
+  }
 
-    console.log('event', this.allEvents[index]);
+  updateEvent(eventId: number) {
+    const index = this.allEvents.findIndex((x) => x['eventId'] == eventId);
+
+
     this.eventUpdate.emit(this.allEvents[index]);
   }
   eventDragStopF(event: any, empId) {
     const index = this.allEvents.findIndex((x) => x['eventId'] === event.id);
-    // console.log("this",this.allEvents[index]);
-    // console.log("this",this.allEvents[index].status);
     const startDate = format(event.start, 'MM/dd/yyyy');
     const startTime = format(event.start, 'hh:mm a');
     const endDate = format(event.end, 'MM/dd/yyyy');
@@ -379,10 +382,9 @@ export class CalendarComponents implements OnInit, OnChanges, AfterViewChecked {
       status: this.allEvents[index].statusId,
     };
     this.dragEvent.emit(obj);
-    console.log(obj);
   }
+
   eventDragResize(event) {
-    console.log('event', event);
     const index = this.allEvents.findIndex((x) => x['eventId'] === event.id);
 
     let obj = {
@@ -395,20 +397,30 @@ export class CalendarComponents implements OnInit, OnChanges, AfterViewChecked {
       statusId: this.allEvents[index].statusId,
     };
     this.eventDateChange.emit(obj);
-    // console.log(obj)
   }
 
   setLefTColTechnicianHeight() {
-    this.techniciansArray.forEach((element) => {
-      var rightRowHeight = $(`.event-row-${element.empId}`).height();
-      $(`.technician-${element.empId}`).css('height', rightRowHeight);
-    });
+    if(this.calendarIndex['id'] == 3 ){ // only runs in hours condtion
+        this.techniciansArray.forEach((element) => {
+          // console.log("element",element)
+          if(element.absent != null){
+            $('tr[data-resource-id="'+element.empId+'"]').addClass(`resource-${element.empId}`);
+            $(`.fc-time-area  .resource-${element.empId} .fc-widget-content`).css("background","rgba(0, 0, 0, 0.12)");
+            $(`.fc-time-area  .resource-${element.empId} .fc-widget-content`).bind('contextmenu', function(e) {
+              return false;
+          }); 
+          }
+        });
+    }
   }
   eventSelects(info: any) {
+    if (this.isDateClick) {
+      return false;
+    }
     this.eventSelect.emit({
       id: info.resource.id,
-      startDate: new Date(info.startStr),
-      endDate: new Date(info.endStr),
+      startDate: new Date(info.start),
+      endDate: new Date(info.end),
     });
   }
 
@@ -508,8 +520,6 @@ export class CalendarComponents implements OnInit, OnChanges, AfterViewChecked {
 
       dateHours.dateTime.push(obj);
 
-      // console.log('obj', obj);
-
       // for hours -> minutes 15 or 30
       const min = { 1: 15, 2: 30 };
       if ([1, 2].includes(this.calendarViewOption)) {
@@ -534,9 +544,6 @@ export class CalendarComponents implements OnInit, OnChanges, AfterViewChecked {
       }
       h++;
     }
-    //  console.log('this.dateTimeRowWidth',     this.calendarDates = dateHours;
-    //  );
-    console.log('this.dateTimeRow', dateHours);
     this.calendarDates = dateHours;
   }
 
@@ -550,14 +557,11 @@ export class CalendarComponents implements OnInit, OnChanges, AfterViewChecked {
         event.diff =
           Math.abs(
             new Date(event.startDate).getTime() -
-              new Date(event.endDate).getTime()
+            new Date(event.endDate).getTime()
           ) / 3600000;
         if (this.calendarViewOption == 4 || this.calendarViewOption == 5) {
           event.diff /= 24;
         }
-        // console.log("Event",event)
-
-        // console.log("difffs",event.diff)
         event.startDate = new Date(event.startDate);
         event.endDate = new Date(event.endDate);
 
@@ -605,7 +609,6 @@ export class CalendarComponents implements OnInit, OnChanges, AfterViewChecked {
       })
     );
 
-    console.log('Mouse down');
 
     const sub = obs.subscribe((moveEvent: any) => {
       if (!this.selectedEventData) {
@@ -617,7 +620,6 @@ export class CalendarComponents implements OnInit, OnChanges, AfterViewChecked {
       if (!leftOffset) {
         return false;
       }
-      console.log('Mouse drag down ', this.selectedEventData);
 
       const defaultLeft = Number(selectedEvent.dataset.left);
 
@@ -639,7 +641,6 @@ export class CalendarComponents implements OnInit, OnChanges, AfterViewChecked {
         selectedEvent.style.width = `${leftOffset - defaultLeft}px`;
       }
       selectedEvent.style.backgroundColor = '#00b383';
-      console.log('selectedEvent', selectedEvent);
     });
   }
 
@@ -679,7 +680,7 @@ export class CalendarComponents implements OnInit, OnChanges, AfterViewChecked {
   /**
    * @description Get different between two date
    */
-  getDiffHours() {}
+  getDiffHours() { }
 
   /**
    *
@@ -687,52 +688,6 @@ export class CalendarComponents implements OnInit, OnChanges, AfterViewChecked {
    * @param techEvent
    * @dees change any exiting event
    */
-  onResizeEnd(event: ResizeEvent, techEvent): void {
-    console.log('onResizeEnd', event.edges);
-    let edges = Number(event.edges.right) || Number(event.edges.left);
-
-    let newHoursTotal;
-    if (edges < 0) {
-      newHoursTotal = Number(edges) / 100;
-    } else {
-      newHoursTotal = Number(edges) / 100;
-    }
-
-    console.log('newHoursTotal', newHoursTotal);
-
-    // return false;
-
-    const cellDiff: number = Number(edges / (200 / this.dateTimeRowWidth));
-    const min: number = Math.floor(cellDiff * 5);
-
-    if (event.edges.left) {
-      if (this.calendarViewOption === 3) {
-        techEvent.startDate = new Date(techEvent.startDate);
-        setTimeout(() => {
-          techEvent.startDate = new Date(
-            techEvent.startDate.setMinutes(
-              techEvent.startDate.getMinutes() + min
-            )
-          );
-        });
-      }
-    }
-
-    if (event.edges.right) {
-      if (this.calendarViewOption === 3) {
-        console.log('techEvent.endDate', techEvent.endDate.toISOString());
-        techEvent.endDate = new Date(techEvent.endDate);
-        techEvent.endDate = new Date(
-          techEvent.endDate.setMinutes(techEvent.endDate.getMinutes() + min)
-        );
-        console.log('techEvent.endDate', techEvent.endDate.toISOString());
-      }
-    }
-
-    // console.log('techEvent', techEvent);
-    this.eventDateChange.emit(techEvent);
-    this.isResizingEvent = false;
-  }
 
   /**
    *
@@ -743,16 +698,13 @@ export class CalendarComponents implements OnInit, OnChanges, AfterViewChecked {
     this.isResizingEvent = true;
   }
 
-  updateEvent(event, empId) {
-    event.empId = empId;
-    this.eventUpdate.emit(event);
-  }
+
   deleteEvent(id) {
     this.eventDelete.emit(id);
   }
 
   OpenAddEvent() {
-    this.addEventPopup.emit();
+    this.addEventPopup.emit({ id: this.addEventTechId });
   }
 
   trackByTechnician(index: number, el: any) {
@@ -768,7 +720,6 @@ export class CalendarComponents implements OnInit, OnChanges, AfterViewChecked {
   }
 
   trackBySubDateTime(index: number, el: any) {
-    // console.log('el', el);
     if (!el) {
       return null;
     }
@@ -792,18 +743,18 @@ export class CalendarComponents implements OnInit, OnChanges, AfterViewChecked {
     this.isResizingEvent = true;
   }
   eventDragStop(model) {
-    console.log('model', model);
+    // console.log('model', model);
   }
   /*********Full calendar Events******************************* */
 
   eventClick(model) {
-    console.log('model', model.view);
+    // console.log('model', model.view);
   }
   clickButton(model) {
-    console.log('clickButton', model);
+    // console.log('clickButton', model);
   }
   dateClick(model) {
-    console.log('dateClick', model);
+    // console.log('dateClick', model);
   }
   updateEvents() {
     this.eventsModel = [
@@ -817,5 +768,20 @@ export class CalendarComponents implements OnInit, OnChanges, AfterViewChecked {
   get yearMonth(): string {
     const dateObj = new Date();
     return dateObj.getUTCFullYear() + '-' + (dateObj.getUTCMonth() + 1);
+  }
+
+  onContextMenu(mouseEvent: MouseEvent) {
+    this.addEventTechId = null;
+    this.editEventObj = null;
+    if ($(mouseEvent.srcElement).parents('.fc-time-area').length) {
+      this.addEventTechId = $(mouseEvent.srcElement).closest('tr').data("resource-id");
+      this.contextMenuService.show.next({
+        event: mouseEvent,
+        item: {},
+      });
+    }
+    mouseEvent.preventDefault();
+    mouseEvent.stopPropagation();
+
   }
 }

@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders,HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IEventFormRequest } from './interfaces/app';
 import { ToastrService } from 'ngx-toastr';
+import { format } from 'date-fns';
 
 // import { parse } from 'path';
 
@@ -24,11 +25,47 @@ export class AppService {
    * @author Shubham Azad
    * @returns Observable<any>
    */
-  getTechniciansList(): Observable<any> {
-    return this.httpClient.get(`${this.apiEndpoint}/user/getTechniciansListWithEvents`, {
-      headers: this.headers,
-    });
+  getTechniciansList(date:any): Observable<any> {
+    const body = new URLSearchParams();
+    // const startDate = format(formvalues.start_date, 'MM/dd/yyyy');
+
+   const parms='?startDate='+format(date[0],'dd/MM/yyyy')+"&endDate="+format(date[1], 'dd/MM/yyyy');
+    console.log("parms",parms)
+    const httpOptions = {
+      headers: { 'Content-Type': 'application/json' },
+      
+  };
+    return this.httpClient.get( 
+      `${this.apiEndpoint}/user/getTechniciansListWithEvents`+parms,
+      {
+        headers: this.headers,
+      }
+    ); 
+
+    // return this.httpClient.get(`${this.apiEndpoint}/user/getTechniciansListWithEvents`, {
+    //   headers: this.headers,
+    // });
   }
+    /** 
+   * Get searchServiceOredrNameWithReason    *
+   * @author Shubham Azad
+   * @returns Observable<any>
+   */
+  serviceOredrNameWithReason(date:any): Observable<any> {
+    const body = new URLSearchParams();
+    body.set("searchText", date);
+    return this.httpClient.post(
+      `${this.apiEndpoint}/user/searchServiceOredrNameWithReason`,
+      body.toString(),
+      {
+        headers: this.headers,
+      }
+    );
+  }
+
+  
+
+  
   /**
    * Get Order lists with their events
    *

@@ -31,7 +31,9 @@
               "src/styles.css",
               "node_modules/@fullcalendar/core/main.css",
               "node_modules/@fullcalendar/timeline/main.css",
-              "node_modules/@fullcalendar/resource-timeline/main.css"
+              "node_modules/@fullcalendar/resource-timeline/main.css",
+              "src/assets/css/bootstrap-datetimepicker.min.css"
+
             ],
             "scripts": []
           },

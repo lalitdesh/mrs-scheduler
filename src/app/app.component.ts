@@ -24,8 +24,11 @@ import {
 } from 'ngx-bootstrap/modal';
 import { IEventFormFields, IEventFormRequest } from './interfaces/app';
 import { Subscription } from 'rxjs';
-import { format, addHours, addMinutes, differenceInHours } from 'date-fns';
+import { format, addHours, addMinutes,startOfWeek,addDays, differenceInHours, addYears,startOfYear, startOfMonth, addMonths } from 'date-fns';
 import { NgxSpinnerService } from 'ngx-spinner';
+import * as $ from 'jquery';
+import { TypeaheadMatch } from 'ngx-bootstrap/typeahead/typeahead-match.class';  
+import { Observable } from 'rxjs';
 
 @Component({
   encapsulation: ViewEncapsulation.Emulated,
@@ -45,53 +48,10 @@ export class AppComponent implements OnInit, OnDestroy {
   fullScreenWindow: boolean = false;
   xInitial = '50%!important;';
   yInitial = '50%!important;';
-
-  // technicianListArray: Array<any> = [
-
-  //   {
-  //   "empId": "100",
-  //   "empName": "Mac Roger",
-  //   "profileImage": "1580920456.jpg",
-  //   "absent": null,
-  //   "eventCount": 1,
-  //   "eventdata": [
-  //       {
-  //       "eventId": "736",
-  //       "tenantName": "TA HQ",
-  //       "startDate": "2020-06-13 10:30",
-  //       "endDate": "2020-06-13 11:30",
-  //       "sostatus": "Open"
-  //       },
-  //       {
-  //         "eventId": "736",
-  //         "tenantName": "TA HQ",
-  //         "startDate": "2020-06-13 09:30",
-  //         "endDate": "2020-06-13 11:00",
-  //         "sostatus": "Open"
-  //         }
-
-  //   ]
-  //   },
-  //   {
-  //     "empId": "101",
-  //     "empName": "Test",
-  //     "profileImage": "1580920456.jpg",
-  //     "absent": "present",
-  //     "eventCount": 1,
-  //     "eventdata": [
-  //         {
-  //         "eventId": "736",
-  //         "tenantName": "TA HQ",
-  //         "startDate": "2020-06-13 02:30",
-  //         "endDate": "2020-06-13 03:30",
-  //         "sostatus": "Open"
-  //         },
-
-  //     ]
-  //     }
-
-  // ]
-  eventPopupTitle: string = 'Add New Event';
+  selectedValue: string;  
+  selectedOption: any;  
+  serviceOrderArray: any=[]; 
+  eventPopupTitle: string = 'Schedule Service Order';
   technicianListArray: Array<any> = [];
   orderListArray: Array<any> = [];
   tenantArray: Array<any> = [];
@@ -101,7 +61,7 @@ export class AppComponent implements OnInit, OnDestroy {
   endDate: Date = addHours(new Date(), 2);
   isDeleteButtonVisible: boolean = false;
   eventFormArray: IEventFormFields = {
-    service_order: '',
+    // service_order: '',
     task_name: '',
     emp_id: null,
     eventId: null,
@@ -118,17 +78,25 @@ export class AppComponent implements OnInit, OnDestroy {
   tenantSubscription: Subscription;
   resetSelectedEvent: boolean = false;
   formSumbited: boolean = false;
+  date:Date=new Date();;
+  formStartTime: string;
+  formEndTime: string;
+  typeaheadNoResults: boolean;
 
-  formStartDate: Date = new Date();
-  formStartTime: Date = new Date();
+  // formStartTime: Date = new Date();
   minFormEndDate: Date = addHours(new Date(), 2);
+  bsInlineRangeValue: Date[];
 
-  date: Date = new Date();
+  // date: Date = new Date();
   zoomInZoomOutArray: Array<any> = [
     { id: 3, value: 'Hour', defualt: true, cal: 'resourceTimelineDay' },
     { id: 4, value: 'Week', defualt: false, cal: 'resourceTimelineWeek' },
+    { id: 8, value: 'Week2', defualt: false, cal: 'resourceTimelineWeek2' },
     { id: 5, value: 'Month', defualt: false, cal: 'resourceTimelineMonth' },
     { id: 6, value: 'Year', defualt: false, cal: 'resourceTimelineYear' },
+    { id: 7, value: 'Year2', defualt: false, cal: 'resourceTimelineYear2' },
+
+
   ];
   calendarIndexArray: Array<any> = []; //defualt is hour
   zoomIn: number = this.zoomInZoomOutArray.indexOf('hour') - 1;
@@ -139,12 +107,17 @@ export class AppComponent implements OnInit, OnDestroy {
     @Inject(DOCUMENT) private document: any,
     private spinner: NgxSpinnerService,
     private formBuilder: FormBuilder
-  ) {}
+  ) { }
+
+   
   /**
    * Component initialized
    */
   ngOnInit(): void {
-    console.log(this.eventFormArray);
+
+    
+
+    this.bsInlineRangeValue = [new Date(),addHours(new Date(), 24)];
     this.zoomInZoomOutArray.forEach((elment, index) => {
       if (elment.defualt == true) {
         this.zoomIn = index - 1;
@@ -153,10 +126,27 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     });
     this.form();
-    this.getTechnicians();
+    this.getTechnicians(this.bsInlineRangeValue);
     this.getOrderStatus();
     this.getTenant();
     this.elem = document.documentElement;
+    let thats=this;
+
+
+    (<any>window).$('.datetimepickerStart').datetimepicker(
+      {  format: 'LT', defaultDate: thats.startDate, useCurrent: false }).on('dp.change', function (e) { 
+        // console.log(`e.date.format('lll')`, e.date, e.date.format('lll'), new Date(), new Date(e.date.format('lll')));
+        thats.addEventForm.patchValue({
+        start_time: new Date(e.date.format('lll')),
+      });
+    });
+
+    (<any>window).$('.datetimepickerEnd').datetimepicker(
+      {  format: 'LT', defaultDate: thats.endDate, useCurrent: false }).on('dp.change', function (e) { 
+        thats.addEventForm.patchValue({
+        end_time: new Date(e.date.format('lll')),
+      });
+    });
   }
   /**
    *
@@ -166,10 +156,57 @@ export class AppComponent implements OnInit, OnDestroy {
   onChangeZoomInZoomOut(type, value) {
     this.zoomOut = value + 1;
     this.zoomIn = value - 1;
-    console.log(this.zoomInZoomOutArray[value]);
     this.calendarIndexArray = this.zoomInZoomOutArray[value];
+
+    this.zoomInZoomOutArray.forEach( (option) => {
+      option.defualt = false;
+    });
+
     this.zoomInZoomOutArray[value].defualt = true;
+    this.getTechnicianWithRange(this.zoomInZoomOutArray[value].id)
   }
+
+  getServiceOrder($event){
+
+    if(!$event){
+      this.serviceOrderArray.length=0;
+      this.addEventForm.patchValue({
+        task_name: "",
+      });
+      return false;
+    }
+     this.service
+      .serviceOredrNameWithReason($event)
+      .subscribe((response: any) => {
+        // console.log("response",response);
+        this.serviceOrderArray.length=0;
+        if (response.status != 0 ) {
+          this.serviceOrderArray=response;
+        }
+      });
+  } 
+  changeTypeaheadNoResults($event){
+    if($event == true){
+      this.addEventForm.patchValue({
+        task_name: "",
+        eventId:this.tenantArray[0].id
+      });
+    }
+    this.typeaheadNoResults=$event;
+
+  }
+  onSelectServiceOrder(event: TypeaheadMatch): void {  
+    const index = this.tenantArray.findIndex((x) => x.id == event.item.id);
+    let eventId = this.tenantArray[0].id;
+    if(index != -1){
+      eventId = this.tenantArray[index].id;
+    }
+
+    this.addEventForm.patchValue({
+      task_name: `${event.item.value} ${event.item.reason}` ,
+      eventId:eventId ,
+    });
+  }  
   /**
    *
    * @param number value
@@ -181,14 +218,68 @@ export class AppComponent implements OnInit, OnDestroy {
     this.zoomOut = index + 1;
     this.calendarIndexArray = this.zoomInZoomOutArray[index];
     this.zoomInZoomOutArray[index].defualt = true;
+    this.getTechnicianWithRange(this.zoomInZoomOutArray[index].id)
+  }
+  getTechnicianWithRange(condtion:number){
+    switch (condtion) {
+      case 3:
+        this.date=new Date();
+
+        this.bsInlineRangeValue = [this.date,addDays(this.date, 1)];
+        this.getTechnicians(this.bsInlineRangeValue)
+
+      break;
+      case 4:
+        this.date=new Date();
+
+        this.bsInlineRangeValue = [startOfWeek(this.date),addDays(startOfWeek(this.date), 8)];
+        this.getTechnicians(this.bsInlineRangeValue)
+
+        break;
+      case 5: {
+        this.date=new Date();
+
+        this.bsInlineRangeValue = [startOfMonth(this.date),addMonths(startOfMonth(this.date), 1)];
+        this.getTechnicians(this.bsInlineRangeValue)
+        
+        break;
+      }
+      case 6:{
+        this.date=new Date();
+
+        this.bsInlineRangeValue = [startOfYear(this.date),addYears(startOfYear(this.date), 1)];
+        this.getTechnicians(this.bsInlineRangeValue)
+        break;
+      }
+      case 7:{
+        // this.bsInlineRangeValue = [addYears(startOfYear(this.date), -1),addYears(startOfYear(this.date), 1)];
+        this.bsInlineRangeValue = [addYears(startOfYear(this.date), 0),addYears(startOfYear(this.date), +2)];
+        this.getTechnicians(this.bsInlineRangeValue)
+        this.date=addYears(startOfYear(this.date), 0);
+
+        break;
+        
+      }
+      case 8:{
+        this.date=new Date();
+        this.bsInlineRangeValue = [startOfWeek(this.date),addDays(startOfWeek(this.date), 16)];
+        this.getTechnicians(this.bsInlineRangeValue)
+        break;
+        
+      }
+        /** year */
+       
+
+        break;
+    }
   }
   /**
    * Get technician list
    */
-  getTechnicians(): void {
+  getTechnicians(date:any): void {
     this.spinner.show();
     this.getEventSubscription = this.service
-      .getTechniciansList()
+      .getTechniciansList(date)
       .subscribe((response: any) => {
         if (response.status === 1) {
           this.technicianListArray = response.data;
@@ -213,7 +304,6 @@ export class AppComponent implements OnInit, OnDestroy {
             status: response.data[0].id,
           });
         }
-        console.log('orderListArray', this.orderListArray);
       });
   }
   /**
@@ -228,40 +318,58 @@ export class AppComponent implements OnInit, OnDestroy {
           this.addEventForm.patchValue({
             eventId: response.data[0].id,
           });
-        }
-        console.log('tenantArray', this.tenantArray);
+          }
       });
   }
   /**
    * Initialize the add event form
    */
   form(): void {
+    const currentDate=new Date();
+    const endDate=addHours(currentDate, 2);
+    this.formStartTime = `${currentDate.getHours()}:${currentDate.getMinutes()}`;
+    this.formEndTime = `${endDate.getHours()} : ${endDate.getMinutes()}`;
     this.addEventForm = new FormGroup({
       task_name: new FormControl(this.eventFormArray.task_name, [
         Validators.required,
       ]),
-      service_order: new FormControl(this.eventFormArray.service_order, [
-        Validators.required,
-      ]),
+
+
+      // service_order: new FormControl(this.eventFormArray.service_order, [
+      //   Validators.required,
+      // ]),
       emp_id: new FormControl(this.eventFormArray.emp_id),
       eventId: new FormControl(this.eventFormArray.eventId),
       status: new FormControl(this.eventFormArray.status),
-      start_date: new FormControl(new Date()),
-      end_date: new FormControl(addHours(new Date(), 2)),
-      start_time: new FormControl(new Date()),
-      end_time: new FormControl(addHours(new Date(), 2)),
+      start_date: new FormControl(currentDate),
+      end_date: new FormControl(endDate),
+      start_time: new FormControl(currentDate),
+      end_time: new FormControl(endDate),
     });
+    setTimeout(() => {
+      $(".timepickericon").click(); // Click on the checkbox
+      $(".timepickericon").click(); // Click on the checkbox
+      $(".timepickericonEnd").click(); // Click on the checkbox
+      $(".timepickericonEnd").click(); // Click on the checkbox
+
+    }, 0);
+   
+    
+
+
   }
   get f() {
     return this.addEventForm.controls;
   }
-
+ 
   /**
    * Save event
    * @param formvalues IEventFormFields
    */
   addEvent(): void {
-    console.log(this.addEventForm.value);
+    // console.log("this.addEventForm.value",this.addEventForm.value)
+    // console.log("this.formStartTime",this.formStartTime)
+    // return;
     this.formSumbited = true;
     if (this.addEventForm.invalid) {
       return;
@@ -276,24 +384,29 @@ export class AppComponent implements OnInit, OnDestroy {
       new Date(`${endDate} ${endTime}`),
       new Date(`${startDate} ${startTime}`)
     );
+
     if (diff < 2) {
       this.service.toastMessage(0, 'Event must be two hours');
+      this.formSumbited = false;
       return;
     }
-
+    
     const formarray: IEventFormRequest = {
-      taskName: `${formvalues.service_order} ${formvalues.task_name}`,
+      taskName: `${formvalues.task_name}`,
       startDate: `${startDate} ${startTime}`,
       endDate: `${endDate} ${endTime}`,
       empId: formvalues.emp_id,
       eventId: formvalues.eventId,
       status: formvalues.status,
     };
+
+    this.spinner.show()
     this.addEventSubscription = this.service
       .addEvent(formarray)
       .subscribe((response: any) => {
+        this.formSumbited = false;
         if (response.status == 1) {
-          this.getTechnicians();
+          this.getTechnicians(this.bsInlineRangeValue);
           let message = 'Event Added Succefully';
           if (this.isDeleteButtonVisible) {
             message = 'Event Updated Succefully';
@@ -302,28 +415,44 @@ export class AppComponent implements OnInit, OnDestroy {
 
           this.service.toastMessage(1, message); //success
           this.spinner.hide();
-          window.location.reload();
+          // window.location.reload();
         } else {
           this.service.toastMessage(0, 'Something Went Wrong'); //error
           this.spinner.hide();
         }
       });
   }
-  openModal() {
-    // this.form()
-    this.formSumbited = false;
+  openModal(tech?) {
+    const currentDate=new Date();
+    const endDate=addHours(currentDate, 2);
+    this.formStartTime = `${currentDate.getHours()}:${currentDate.getMinutes()}`;
+    this.formEndTime = `${endDate.getHours()} : ${endDate.getMinutes()}`;
+    if (tech && tech.id) {
+      this.addEventForm.patchValue({ emp_id: tech.id,
+                              start_time: this.formStartTime,
+                              end_time: this.formEndTime });
+                                  
+    }
+    setTimeout(() => {
+      $(".timepickericon").click(); // Click on the checkbox
+      $(".timepickericon").click(); // Click on the checkbox
+      $(".timepickericonEnd").click(); // Click on the checkbox
+      $(".timepickericonEnd").click(); // Click on the checkbox
 
+    }, 0);
+   
+    this.formSumbited = false;
+    // this.form();
     this.addEventModal.show();
   }
   closeAddEventModalPopup() {
     this.resetSelectedEvent = !this.resetSelectedEvent;
     this.formSumbited = false;
-
-    console.log('resetSelectedEvent');
+    this.typeaheadNoResults=false;
     this.addEventModal.hide();
     this.addEventForm.reset();
     this.eventFormArray = {
-      service_order: '',
+      // service_order: '',
       task_name: '',
       emp_id: this.technicianListArray[0].empId,
       eventId: this.tenantArray[0].id,
@@ -334,10 +463,10 @@ export class AppComponent implements OnInit, OnDestroy {
       end_time: addHours(new Date(), 2),
     };
     this.addEventForm.patchValue(this.eventFormArray);
-    this.eventPopupTitle = 'Add New Event';
+    this.eventPopupTitle = 'Schedule Service Order';
     this.isDeleteButtonVisible = false;
-    this.formStartDate = new Date();
-    this.formStartTime = new Date();
+    // this.formStartTime = "";
+    // this.formStartTime = new Date();
     this.minFormEndDate = addHours(new Date(), 2);
   }
 
@@ -345,11 +474,9 @@ export class AppComponent implements OnInit, OnDestroy {
    * get event details from calendar
    */
   onEventSelect($event): void {
-    console.log('onEventSelect----', $event);
     this.formSumbited = false;
-
     this.eventFormArray = {
-      service_order: '',
+      // service_order: '',
       task_name: '',
       emp_id: $event.id,
       eventId: this.tenantArray[0].id,
@@ -359,15 +486,24 @@ export class AppComponent implements OnInit, OnDestroy {
       start_time: $event.startDate,
       end_time: $event.endDate,
     };
-    console.log('onEventSelect eventFormArray', this.eventFormArray);
 
+    this.addEventForm.reset();
     this.addEventForm.patchValue(this.eventFormArray);
-    console.log(this.eventFormArray);
+    this.formStartTime = `${new Date($event.startDate).getHours()} : ${new Date($event.startDate).getMinutes()}`;
+    this.formEndTime = `${new Date($event.endDate).getHours()} : ${new Date($event.endDate).getMinutes()}`;
+
+    setTimeout(() => {
+      $(".timepickericon").click(); // Click on the checkbox
+      $(".timepickericon").click(); // Click on the checkbox
+      $(".timepickericonEnd").click(); // Click on the checkbox
+      $(".timepickericonEnd").click(); // Click on the checkbox
+
+    }, 0);
+
     this.addEventModal.show();
   }
 
   fullScreen(value: boolean) {
-    console.log(value);
     if (!value) {
       this.fullScreenWindow = true;
       if (this.elem.requestFullscreen) {
@@ -424,7 +560,6 @@ export class AppComponent implements OnInit, OnDestroy {
    * @param $event full event data
    */
   onEventDateChange($event): void {
-    console.log('resizedddd', $event);
     const startDate = format($event.startDate, 'MM/dd/yyyy');
     const startTime = format($event.startDate, 'hh:mm a');
     const endDate = format($event.endDate, 'MM/dd/yyyy');
@@ -446,18 +581,30 @@ export class AppComponent implements OnInit, OnDestroy {
     };
     // console.log("formarray,onEventDateChange",formarray)
     // return;
+    this.spinner.show();
     this.addEventSubscription = this.service
       .addEvent(formarray)
-      .subscribe((response: any) => {});
+      .subscribe((response: any) => {
+        if (response.status == 1) {
+          this.service.toastMessage(1, "Event Updated Succefully"); //success
+          this.spinner.hide();
+        } else {
+          this.service.toastMessage(0, 'Something Went Wrong'); //error
+          this.spinner.hide();
+        }
+
+       });
+
+       
   }
   onEventUpdate($event): void {
-    console.log('onEv', $event);
     this.selectedEvent = $event;
-    this.eventPopupTitle = 'Edit Event';
+    this.eventPopupTitle = 'Edit Schedule Service Order';
     this.isDeleteButtonVisible = true;
+    this.typeaheadNoResults=false;
     this.eventFormArray = {
-      service_order: $event.taskName.substr(0, $event.taskName.indexOf(' ')),
-      task_name: $event.taskName.substr($event.taskName.indexOf(' ') + 1),
+      // service_order: $event.taskName.substr(0, $event.taskName.indexOf(' ')),
+      task_name: $event.taskName,
       emp_id: $event.empId,
       eventId: $event.eventId,
       status: $event.statusId,
@@ -466,22 +613,29 @@ export class AppComponent implements OnInit, OnDestroy {
       start_time: new Date($event.startDate),
       end_time: new Date($event.endDate),
     };
-    this.formStartDate = new Date($event.startDate);
-    this.formStartTime = new Date($event.startDate);
-    // this.minFormEndDate = addHours(new Date(), 2);
-
+    this.formStartTime = `${new Date($event.startDate).getHours()} : ${new Date($event.startDate).getMinutes()}`;
+    this.formEndTime = `${new Date($event.endDate).getHours()} : ${new Date($event.endDate).getMinutes()}`;
+    this.addEventForm.reset();
     this.addEventForm.patchValue(this.eventFormArray);
     this.addEventModal.show();
+    setTimeout(() => {
+      $(".timepickericon").click(); // Click on the checkbox
+      $(".timepickericon").click(); // Click on the checkbox
+      $(".timepickericonEnd").click(); // Click on the checkbox
+      $(".timepickericonEnd").click(); // Click on the checkbox
+
+    }, 0);
   }
   ondragDropEvent($event): void {
-    console.log('as', $event);
     // return;
     this.spinner.show();
     this.addEventSubscription = this.service
       .addEvent($event)
       .subscribe((response: any) => {
         if (response.status == 1) {
-          this.getTechnicians();
+          this.getTechnicians(this.bsInlineRangeValue);
+          this.service.toastMessage(1, "Event Updated Succefully"); //success
+
         } else {
           this.service.toastMessage(0, 'Something Went Wrong'); //error
           this.spinner.hide();
@@ -493,6 +647,9 @@ export class AppComponent implements OnInit, OnDestroy {
    * @param number id
    */
   deleteEvent(id) {
+
+    // console.log("id",id);
+    // return;
     this.spinner.show()
     this.service
       .deleteEvent(id)
@@ -501,10 +658,10 @@ export class AppComponent implements OnInit, OnDestroy {
         this.spinner.hide()
 
         if (response.status == 1) {
-          this.getTechnicians();
+          this.getTechnicians(this.bsInlineRangeValue);
           this.service.toastMessage(1, "Event Deleted Succefully")
           this.closeAddEventModalPopup();
-          window.location.reload(true)
+          // window.location.reload(true)
         } else {
           this.service.toastMessage(1, "Something went wrong")
         }
@@ -515,24 +672,27 @@ export class AppComponent implements OnInit, OnDestroy {
    * @param $event
    */
   onDateChange($event) {
-    this.date = $event;
+    this.date=$event;
+    this.bsInlineRangeValue=[$event,addHours(new Date($event),24)];
+
+    this.getTechnicians(this.bsInlineRangeValue)
+    
+    // this.date = $event;
   }
   onStartDateChange($event) {
-    console.log('onStartDateChange', $event);
-    if ($event != null) {
-      this.formStartDate = $event;
-      const startDate = format($event, 'MM/dd/yyyy');
-      const startTime = format(this.formStartTime, 'hh:mm a');
-      this.minFormEndDate = addHours(new Date(`${startDate} ${startTime}`), 2);
-    }
+    // if ($event != null) {
+      // this.formStartDate = $event;
+      // const startDate = format($event, 'MM/dd/yyyy');
+      // const startTime = format(this.formStartTime, 'hh:mm a');
+      // this.minFormEndDate = addHours(new Date(`${startDate} ${startTime}`), 2);
+    // }
   }
   onStartTimeChange($event) {
-    console.log('onStartTimeChange', $event);
     if ($event != null) {
-      this.formStartTime = $event;
-      const startDate = format(this.formStartDate, 'MM/dd/yyyy');
-      const startTime = format($event, 'hh:mm a');
-      this.minFormEndDate = addHours(new Date(`${startDate} ${startTime}`), 2);
+      // this.formStartTime = $event;
+      // const startDate = format(this.formStartDate, 'MM/dd/yyyy');
+      // const startTime = format($event, 'hh:mm a');
+      // this.minFormEndDate = addHours(new Date(`${startDate} ${startTime}`), 2);
     }
   }
   /**
@@ -540,7 +700,7 @@ export class AppComponent implements OnInit, OnDestroy {
    */
   reoladDatabase() {
     // this.form();
-    this.getTechnicians();
+    this.getTechnicians(this.bsInlineRangeValue);
     this.getTenant();
     this.closeAddEventModalPopup();
   }

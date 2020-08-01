@@ -269,3 +269,12 @@ color:#fff !important;
 .form-label{
   font-weight: 700;
 }
+
+.time-picker-icon {
+  width: 14%;
+  margin-top: 4px;
+  padding-left: 9px;
+}
+.zoom button:disabled {
+  opacity: .5;
+}
